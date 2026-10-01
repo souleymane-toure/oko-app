@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Oko app</title>
+<style>
+:root{--bg:#14101f;--card:#241b3a;--tx:#f5efe6;--mut:#a79fba;--ac:#ffb43a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root:not([data-theme="light"]){color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Trebuchet MS",Verdana,sans-serif}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-size:22px;font-weight:800;color:var(--ac);letter-spacing:.5px}
+nav{display:flex;gap:6px;overflow-x:auto;max-width:100%}
+nav button{background:none;border:0;color:var(--mut);font:inherit;padding:8px 12px;border-radius:20px;white-space:nowrap}
+nav button.on{background:var(--card);color:var(--tx)}
+.hero{margin:8px 16px 20px;border-radius:18px;padding:28px 20px;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px}
+.hero h1{margin:0;font-size:30px}
+.hero p{margin:0;color:#fff;opacity:.85;max-width:46ch}
+.btn{background:var(--ac);color:#1b1200;border:0;border-radius:10px;padding:10px 18px;font:inherit;font-weight:700;align-self:flex-start;cursor:pointer}
+h2{font-size:18px;margin:18px 16px 10px}
+.row{display:flex;gap:12px;overflow-x:auto;padding:0 16px 8px;scrollbar-width:none}
+.c{flex:0 0 130px;height:190px;border-radius:12px;padding:10px;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;cursor:pointer;border:0;text-align:left;font:inherit}
+.c b{font-size:14px;text-shadow:0 1px 4px #0008}
+.c small{opacity:.85}
+.c:focus-visible,.btn:focus-visible,nav button:focus-visible{outline:3px solid var(--ac)}
+#m{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+#m.o{display:flex}
+.box{background:var(--card);border-radius:16px;width:100%;max-width:560px;overflow:hidden}
+.top{height:150px;display:flex;align-items:flex-end;padding:14px}
+.top h3{margin:0;font-size:24px}
+.bd{padding:16px;display:grid;gap:12px}
+.bd p{margin:0;color:var(--mut)}
+video{width:100%;border-radius:10px;background:#000;display:none}
+label.btn{display:inline-block}
+input[type=file]{display:none}
+.x{background:none;border:0;color:var(--mut);font:inherit;padding:8px;justify-self:end}
+#lg{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+#lg .logo{font-size:38px}#lg p{margin:0 0 8px;color:var(--mut);max-width:34ch}
+.sb{width:100%;max-width:320px;border:0;border-radius:12px;padding:14px;font:inherit;font-weight:700;cursor:pointer}
+.g{background:#fff;color:#222}.fb{background:#1877f2;color:#fff}
+.sb:focus-visible{outline:3px solid var(--ac)}
+#lg small{color:var(--mut);max-width:34ch}
+#out{margin-left:auto;background:none;border:0;color:var(--mut);font:inherit;padding:8px}
+.c.l{flex-basis:210px;height:120px}
+.live{background:#e11d48;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700;align-self:flex-start;margin-bottom:auto}
+</style>
+</head>
+<body>
+<div id="lg"><div class="logo">Oko app</div><p>Connectez-vous pour regarder films, séries, dessins animés et matchs en direct.</p><button class="sb g" id="bg">Continuer avec Google (Gmail)</button><button class="sb fb" id="bf" disabled style="opacity:.5">Facebook (bientôt)</button><small id="err">Connectez-vous avec votre compte Google.</small></div>
+<header><div class="logo">Oko app</div><nav id="nav"></nav><button id="out">Se déconnecter</button></header>
+<div id="hero" class="hero"></div>
+<main id="main"></main>
+<div id="m" role="dialog" aria-modal="true"><div class="box">
+<div class="top" id="mt"><h3 id="mh"></h3></div>
+<div class="bd"><p id="md"></p>
+<video id="v" controls playsinline></video>
+<label class="btn">Choisir une vidéo sur mon téléphone<input type="file" id="f" accept="video/*"></label>
+<button class="x" id="cl">Fermer</button></div></div></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const app = initializeApp({
+  apiKey: "AIzaSyBGMO1A_fdXdktmKLtQXGqdwprQ_wp226A",
+  authDomain: "oko-app-d1ffa.firebaseapp.com",
+  projectId: "oko-app-d1ffa",
+  storageBucket: "oko-app-d1ffa.firebasestorage.app",
+  messagingSenderId: "428381623254",
+  appId: "1:428381623254:web:c609c82097afa6deaa4a77"
+});
+const auth = getAuth(app);
+const G=["#c2410c,#7c2d12","#0e7490,#164e63","#7e22ce,#4c1d95","#be123c,#881337","#15803d,#14532d","#b45309,#78350f","#1d4ed8,#1e3a8a","#a21caf,#701a75"];
+const T=[
+["Film","Nuit sur le fleuve","Un thriller calme au bord de l'eau."],
+["Film","La maison du vent","Une famille retape une vieille bâtisse."],
+["Film","Dernier train","Huit voyageurs, une seule nuit."],
+["Film","Cap au sud","Un road-trip entre amis."],
+["Série","Les voisins","Saison 1 : la vie d'un immeuble."],
+["Série","Quartier général","Une équipe de détectives de quartier."],
+["Série","Cuisine ouverte","Un restaurant, des secrets."],
+["Série","Après l'école","Des lycéens et leurs projets."],
+["Dessin animé","Petit Dragon","Un dragon apprend à voler."],
+["Dessin animé","Les Astro-Chats","Des chats explorent l'espace."],
+["Dessin animé","Forêt magique","Aventures sous les grands arbres."],
+["Dessin animé","Bulle et Bob","Deux poissons curieux."],
+["Direct","Lions FC – Étoile Nord","Football · 67e minute · 2-1"],
+["Direct","Racing Sud – Union Est","Football · 23e minute · 0-0"],
+["Direct","Tigres – Aigles","Basket · 3e quart-temps · 54-51"],
+["Direct","Océan RC – Alpes RC","Rugby · mi-temps · 12-9"]
+].map((t,i)=>({k:t[0],n:t[1],d:t[2],g:`linear-gradient(160deg,${G[i%8]})`}));
+const tabs=["Tout","Direct","Film","Série","Dessin animé"],lab={"Direct":"En direct","Film":"Films","Série":"Séries","Dessin animé":"Dessins animés"};
+let cur="Tout";
+const $=id=>document.getElementById(id);
+function open_(t){$("mh").textContent=t.n;$("md").textContent=t.k+" — "+t.d;$("mt").style.background=t.g;$("v").style.display="none";$("v").removeAttribute("src");$("m").classList.add("o")}
+function render(){
+$("nav").innerHTML="";
+tabs.forEach(x=>{const b=document.createElement("button");b.textContent=x==="Tout"?"Tout":lab[x];b.className=x===cur?"on":"";b.onclick=()=>{cur=x;render()};$("nav").append(b)});
+const list=T.filter(t=>cur==="Tout"||t.k===cur),h=list[0];
+$("hero").style.background=h.g;$("hero").innerHTML=`<h1>${h.n}</h1><p>${h.d}</p>`;
+const bt=document.createElement("button");bt.className="btn";bt.textContent="Regarder";bt.onclick=()=>open_(h);$("hero").append(bt);
+$("main").innerHTML="";
+(cur==="Tout"?["Direct","Film","Série","Dessin animé"]:[cur]).forEach(k=>{
+const items=T.filter(t=>t.k===k);const h2=document.createElement("h2");h2.textContent=lab[k];
+const r=document.createElement("div");r.className="row";
+items.forEach(t=>{const c=document.createElement("button");c.className="c"+(k==="Direct"?" l":"");c.style.background=t.g;c.innerHTML=(k==="Direct"?`<span class="live">● EN DIRECT</span>`:"")+`<b>${t.n}</b><small>${k==="Direct"?t.d:t.k}</small>`;c.onclick=()=>open_(t);r.append(c)});
+$("main").append(h2,r)});
+}
+$("cl").onclick=()=>{$("v").pause();$("m").classList.remove("o")};
+$("m").onclick=e=>{if(e.target===$("m"))$("cl").click()};
+$("f").onchange=e=>{const f=e.target.files[0];if(!f)return;const v=$("v");v.src=URL.createObjectURL(f);v.style.display="block";v.play().catch(()=>{})};
+$("bg").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{$("err").textContent="Connexion impossible ("+e.code+")"});
+$("out").onclick=()=>signOut(auth);
+onAuthStateChanged(auth,u=>{$("lg").style.display=u?"none":"flex";$("out").style.display=u?"":"none"});
+render();
+</script>
+</body>
+</html>
